@@ -26,7 +26,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<
       map(
         (data: T): StandardResponse<T> => ({
           success: true,
-          message: 'Request successful',
+          message: 'successful',
           data,
           timestamp: new Date().toISOString(),
         }),

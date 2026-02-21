@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-   schemas  = ["church"]
 }
 
 model Branch {
@@ -13,8 +12,6 @@ model Branch {
   name      String
   regions   Region[]
   createdAt DateTime @default(now())
-
-  @@schema("church")
 }
 
 model Region {
@@ -24,8 +21,6 @@ model Region {
   branch    Branch   @relation(fields: [branchId], references: [id])
   families  Family[]
   createdAt DateTime @default(now())
-
-  @@schema("church")
 }
 
 model Family {
@@ -36,14 +31,11 @@ model Family {
   region    Region   @relation(fields: [regionId], references: [id])
   members   Member[]
   createdAt DateTime @default(now())
-
-  @@schema("church")
 }
 
 model Member {
   id        String   @id @default(uuid())
-  firstName String
-  lastName  String
+  name      String
   gender    Gender
   birthDate DateTime?
   phone     String?
@@ -56,8 +48,6 @@ model Member {
   givings     Giving[]
 
   createdAt DateTime @default(now())
-
-  @@schema("church")
 }
 
 model Attendance {
@@ -70,8 +60,6 @@ model Attendance {
   totalCount  Int
 
   createdAt   DateTime @default(now())
-
-  @@schema("church")
 
   @@unique([serviceDate, serviceType])
 }
@@ -86,15 +74,11 @@ model Giving {
   givingDate DateTime
 
   createdAt DateTime @default(now())
-
-  @@schema("church")
 }
 
 enum Gender {
   MALE
   FEMALE
-
-  @@schema("church")
 }
 
 model User {
@@ -103,14 +87,10 @@ model User {
   password  String
   role      Role
   createdAt DateTime @default(now())
-
-  @@schema("church")
 }
 
 enum Role {
   ADMIN
   STAFF
   FINANCE
-
-  @@schema("church")
 }
