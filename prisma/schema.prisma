@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+   schemas  = ["church"]
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  name      String
+  regions   Region[]
+  createdAt DateTime @default(now())
+
+  @@schema("church")
+}
+
+model Region {
+  id        String   @id @default(uuid())
+  name      String
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  families  Family[]
+  createdAt DateTime @default(now())
+
+  @@schema("church")
+}
+
+model Family {
+  id        String   @id @default(uuid())
+  familyName String
+  address   String?
+  regionId  String
+  region    Region   @relation(fields: [regionId], references: [id])
+  members   Member[]
+  createdAt DateTime @default(now())
+
+  @@schema("church")
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  gender    Gender
+  birthDate DateTime?
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+
+  familyId  String
+  family    Family   @relation(fields: [familyId], references: [id])
+
+  givings     Giving[]
+
+  createdAt DateTime @default(now())
+
+  @@schema("church")
+}
+
+model Attendance {
+  id          String   @id @default(uuid())
+  serviceDate DateTime
+  serviceType String
+
+  maleCount   Int
+  femaleCount Int
+  totalCount  Int
+
+  createdAt   DateTime @default(now())
+
+  @@schema("church")
+
+  @@unique([serviceDate, serviceType])
+}
+
+model Giving {
+  id        String   @id @default(uuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+
+  amount    Float
+  category  String
+  givingDate DateTime
+
+  createdAt DateTime @default(now())
+
+  @@schema("church")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+
+  @@schema("church")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+
+  @@schema("church")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  FINANCE
+
+  @@schema("church")
+}
