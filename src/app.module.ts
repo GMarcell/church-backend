@@ -8,9 +8,11 @@ import { GivingModule } from './giving/giving.module';
 import { BranchModule } from './branch/branch.module';
 import { RegionModule } from './region/region.module';
 import { FamilyModule } from './family/family.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
+    PrismaModule,
     AuthModule,
     MemberModule,
     AttendanceModule,
