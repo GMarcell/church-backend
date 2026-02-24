@@ -37,11 +37,17 @@ export class AuthService {
       where: { email },
     });
 
+    console.log(user);
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    console.log(password);
+    console.log(isPasswordValid);
+    console.log(user?.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
