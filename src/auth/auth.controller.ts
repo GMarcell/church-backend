@@ -19,8 +19,6 @@ export class AuthController {
   ) {
     const data = await this.authService.login(body.email, body.password);
 
-    console.log(data);
-
     res.cookie('access_token', data?.access_token, {
       httpOnly: true,
       secure: false,
