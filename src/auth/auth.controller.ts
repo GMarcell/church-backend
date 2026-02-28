@@ -29,4 +29,17 @@ export class AuthController {
       message: 'Login successful',
     };
   }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: false, // true in production (HTTPS)
+      sameSite: 'lax',
+    });
+
+    return {
+      message: 'Logout successful',
+    };
+  }
 }
