@@ -6,8 +6,8 @@ import { CreateAttendanceDto } from './dto/create-attendance.dto';
 export class AttendanceService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateAttendanceDto) {
-    const total = dto.maleCount + dto.femaleCount;
+  create(dto: CreateAttendanceDto) {
+    const totalCount = dto.maleCount + dto.femaleCount;
 
     return this.prisma.attendance.create({
       data: {
@@ -15,28 +15,24 @@ export class AttendanceService {
         serviceType: dto.serviceType,
         maleCount: dto.maleCount,
         femaleCount: dto.femaleCount,
-        totalCount: total,
+        totalCount,
       },
     });
   }
 
-  async findAll() {
+  findAll() {
     return this.prisma.attendance.findMany();
   }
 
-  async findByDate(date: string) {
-    return this.prisma.attendance.findMany({
-      where: {
-        serviceDate: new Date(date),
-      },
+  findOne(id: string) {
+    return this.prisma.attendance.findUnique({
+      where: { id },
     });
   }
 
-  async findByService(service: string) {
-    return this.prisma.attendance.findMany({
-      where: {
-        serviceType: service,
-      },
+  remove(id: string) {
+    return this.prisma.attendance.delete({
+      where: { id },
     });
   }
 }

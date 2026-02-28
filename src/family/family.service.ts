@@ -6,13 +6,19 @@ import { CreateFamilyDto } from './dto/create-family.dto';
 export class FamilyService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: CreateFamilyDto) {
+  create(dto: CreateFamilyDto) {
     return this.prisma.family.create({
-      data,
+      data: {
+        familyName: dto.familyName,
+        address: dto.address,
+        region: {
+          connect: { id: dto.regionId },
+        },
+      },
     });
   }
 
-  async findAll() {
+  findAll() {
     return this.prisma.family.findMany({
       include: {
         region: true,
@@ -21,9 +27,19 @@ export class FamilyService {
     });
   }
 
-  async findByRegion(regionId: string) {
-    return this.prisma.family.findMany({
-      where: { regionId },
+  findOne(id: string) {
+    return this.prisma.family.findUnique({
+      where: { id },
+      include: {
+        region: true,
+        members: true,
+      },
+    });
+  }
+
+  remove(id: string) {
+    return this.prisma.family.delete({
+      where: { id },
     });
   }
 }

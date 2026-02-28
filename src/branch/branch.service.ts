@@ -6,13 +6,13 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 export class BranchService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: CreateBranchDto) {
+  create(dto: CreateBranchDto) {
     return this.prisma.branch.create({
-      data,
+      data: dto,
     });
   }
 
-  async findAll() {
+  findAll() {
     return this.prisma.branch.findMany({
       include: {
         regions: true,
@@ -20,14 +20,16 @@ export class BranchService {
     });
   }
 
-  async findOne(id: string) {
+  findOne(id: string) {
     return this.prisma.branch.findUnique({
       where: { id },
-      include: { regions: true },
+      include: {
+        regions: true,
+      },
     });
   }
 
-  async remove(id: string) {
+  remove(id: string) {
     return this.prisma.branch.delete({
       where: { id },
     });

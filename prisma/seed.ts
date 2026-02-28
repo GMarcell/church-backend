@@ -1,11 +1,10 @@
-import { PrismaClient, Gender, Role } from '@prisma/client';
+import { PrismaClient, Gender, Role, MemberRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
   // Clear existing data (optional, useful for seeding fresh)
-  await prisma.giving.deleteMany();
   await prisma.attendance.deleteMany();
   await prisma.member.deleteMany();
   await prisma.family.deleteMany();
@@ -69,10 +68,16 @@ async function main() {
         data: {
           name: `testing fullname member ${i}`,
           gender: i % 2 === 0 ? Gender.MALE : Gender.FEMALE,
-          birthDate: '2026-02-21T19:03:24.480Z',
+          birthDate: new Date('2026-02-21T19:03:24.480Z'),
           phone: '12390231021',
           email: 'danjdw@dsad.com',
           familyId: family.id,
+          role:
+            i === 1
+              ? MemberRole.FAMILY_HEAD
+              : i === 2
+                ? MemberRole.WIFE
+                : MemberRole.CHILD,
         },
       });
       members.push(member);
@@ -98,18 +103,6 @@ async function main() {
       },
     ],
   });
-
-  // --- Seed Giving ---
-  for (const member of members.slice(0, 5)) {
-    await prisma.giving.create({
-      data: {
-        memberId: member.id,
-        amount: 50_000,
-        category: 'Donation',
-        givingDate: new Date(),
-      },
-    });
-  }
 
   // --- Seed Users ---
   await prisma.user.createMany({

@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { CreateMemberDto } from './dto/create-member.dto';
 
 @Injectable()
 export class MemberService {
   constructor(private prisma: PrismaService) {}
 
-  create(data: Prisma.MemberCreateInput) {
-    return this.prisma.member.create({ data });
+  create(dto: CreateMemberDto) {
+    return this.prisma.member.create({
+      data: {
+        ...dto,
+        birthDate: new Date(dto.birthDate),
+      },
+    });
   }
 
   findAll() {
@@ -15,6 +20,21 @@ export class MemberService {
       include: {
         family: true,
       },
+    });
+  }
+
+  findOne(id: string) {
+    return this.prisma.member.findUnique({
+      where: { id },
+      include: {
+        family: true,
+      },
+    });
+  }
+
+  remove(id: string) {
+    return this.prisma.member.delete({
+      where: { id },
     });
   }
 }

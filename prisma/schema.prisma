@@ -24,30 +24,36 @@ model Region {
 }
 
 model Family {
-  id        String   @id @default(uuid())
+  id         String   @id @default(uuid())
   familyName String
-  address   String?
-  regionId  String
-  region    Region   @relation(fields: [regionId], references: [id])
-  members   Member[]
-  createdAt DateTime @default(now())
+  address    String?
+  regionId   String
+  region     Region   @relation(fields: [regionId], references: [id])
+  members    Member[]
+  createdAt  DateTime @default(now())
 }
 
 model Member {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
   gender    Gender
-  birthDate DateTime?
+  birthDate DateTime
   phone     String?
   email     String?
-  isActive  Boolean  @default(true)
+  role      MemberRole
+  isActive  Boolean    @default(true)
 
-  familyId  String
-  family    Family   @relation(fields: [familyId], references: [id])
-
-  givings     Giving[]
+  familyId String
+  family   Family @relation(fields: [familyId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+enum MemberRole {
+  FAMILY_HEAD
+  WIFE
+  CHILD
+  OTHER
 }
 
 model Attendance {
@@ -59,21 +65,9 @@ model Attendance {
   femaleCount Int
   totalCount  Int
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([serviceDate, serviceType])
-}
-
-model Giving {
-  id        String   @id @default(uuid())
-  memberId  String
-  member    Member   @relation(fields: [memberId], references: [id])
-
-  amount    Float
-  category  String
-  givingDate DateTime
-
-  createdAt DateTime @default(now())
 }
 
 enum Gender {

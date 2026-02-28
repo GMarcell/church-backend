@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 
-@Controller('attendance')
+@Controller('attendances')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
@@ -16,13 +16,13 @@ export class AttendanceController {
     return this.attendanceService.findAll();
   }
 
-  @Get('date/:date')
-  findByDate(@Param('date') date: string) {
-    return this.attendanceService.findByDate(date);
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.attendanceService.findOne(id);
   }
 
-  @Get('service/:serviceType')
-  findByMember(@Param('serviceType') serviceType: string) {
-    return this.attendanceService.findByService(serviceType);
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.attendanceService.remove(id);
   }
 }
