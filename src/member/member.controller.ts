@@ -25,4 +25,9 @@ export class MemberController {
   remove(@Param('id') id: string) {
     return this.memberService.remove(id);
   }
+
+  @Get('count-all')
+  countAll() {
+    return this.memberService.countAll();
+  }
 }

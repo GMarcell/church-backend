@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMemberDto } from './dto/create-member.dto';
+import { Gender } from '@prisma/client';
 
 @Injectable()
 export class MemberService {
@@ -36,5 +37,25 @@ export class MemberService {
     return this.prisma.member.delete({
       where: { id },
     });
+  }
+
+  async countAll() {
+    const female = await this.prisma.member.count({
+      where: {
+        gender: Gender.FEMALE,
+      },
+    });
+    const male = await this.prisma.member.count({
+      where: {
+        gender: Gender.MALE,
+      },
+    });
+
+    const all = male + female;
+    return {
+      all,
+      male,
+      female,
+    };
   }
 }
