@@ -8,6 +8,7 @@ import { BranchModule } from './branch/branch.module';
 import { RegionModule } from './region/region.module';
 import { FamilyModule } from './family/family.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PrismaModule } from './prisma/prisma.module';
     BranchModule,
     RegionModule,
     FamilyModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

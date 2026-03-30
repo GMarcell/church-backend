@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { Gender } from '@prisma/client';
+import { UpdateMemberDto } from './dto/update-member.dto';
 
 @Injectable()
 export class MemberService {
@@ -29,6 +30,28 @@ export class MemberService {
       where: { id },
       include: {
         family: true,
+      },
+    });
+  }
+
+  update(id: string, dto: UpdateMemberDto) {
+    return this.prisma.member.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.gender !== undefined && { gender: dto.gender }),
+        ...(dto.birthDate !== undefined && {
+          birthDate: new Date(dto.birthDate),
+        }),
+        ...(dto.phone !== undefined && { phone: dto.phone }),
+        ...(dto.email !== undefined && { email: dto.email }),
+        ...(dto.role !== undefined && { role: dto.role }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+        ...(dto.familyId !== undefined && {
+          family: {
+            connect: { id: dto.familyId },
+          },
+        }),
       },
     });
   }
