@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
+import {
+  createPaginatedResult,
+  getPaginationParams,
+} from '../common/utils/pagination.util';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Injectable()
 export class AttendanceService {
@@ -21,8 +26,20 @@ export class AttendanceService {
     });
   }
 
-  findAll() {
-    return this.prisma.attendance.findMany();
+  async findAll(query: PaginationQueryDto) {
+    const { page, limit, skip } = getPaginationParams(query);
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.attendance.findMany({
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.attendance.count(),
+    ]);
+
+    return createPaginatedResult(items, total, page, limit);
   }
 
   findOne(id: string) {

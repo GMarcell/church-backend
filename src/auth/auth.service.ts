@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
+import { AuthPayload } from './interfaces/auth-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -10,6 +11,14 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
+
+  private formatDateAsPassword(date: Date) {
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+
+    return `${day}-${month}-${year}`;
+  }
 
   async register(email: string, password: string, role: Role) {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -47,14 +56,65 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = {
+    const payload: AuthPayload = {
       sub: user.id,
+      authType: 'user',
       email: user.email,
       role: user.role,
     };
 
+    const accessToken = this.jwtService.sign(payload);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
+      token: accessToken,
+      user: {
+        email: user.email,
+        role: user.role,
+      },
+    };
+  }
+
+  async memberLogin(name: string, password: string) {
+    const members = await this.prisma.member.findMany({
+      where: {
+        name: {
+          equals: name,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    const member = members.find(
+      (item) => this.formatDateAsPassword(item.birthDate) === password,
+    );
+
+    if (!member) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const payload: AuthPayload = {
+      sub: member.id,
+      authType: 'member',
+      memberId: member.id,
+      name: member.name,
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+
+    return {
+      access_token: accessToken,
+      token: accessToken,
+      user: member.email
+        ? {
+            email: member.email,
+            role: Role.MEMBER,
+          }
+        : undefined,
+      member: {
+        id: member.id,
+        name: member.name,
+      },
     };
   }
 }

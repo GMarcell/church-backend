@@ -2,6 +2,7 @@ import { Controller, Post, Body, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register';
 import type { Response } from 'express';
+import { MemberLoginDto } from './dto/member-login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -25,8 +26,27 @@ export class AuthController {
       sameSite: 'lax',
     });
 
+    return data;
+  }
+
+  @Post('member-login')
+  async memberLogin(
+    @Body() body: MemberLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const data = await this.authService.memberLogin(body.name, body.password);
+
+    res.cookie('access_token', data.access_token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+    });
+
     return {
-      message: 'Login successful',
+      token: data.token,
+      user: data.user,
+      member: data.member,
+      access_token: data.access_token,
     };
   }
 

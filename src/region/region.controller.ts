@@ -6,10 +6,12 @@ import {
   Param,
   Delete,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { RegionService } from './region.service';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Controller('v1/regions')
 export class RegionController {
@@ -21,8 +23,8 @@ export class RegionController {
   }
 
   @Get()
-  findAll() {
-    return this.regionService.findAll();
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.regionService.findAll(query);
   }
 
   @Get('count')

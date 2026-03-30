@@ -6,10 +6,12 @@ import {
   Param,
   Delete,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { BranchService } from './branch.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Controller('v1/branches')
 export class BranchController {
@@ -21,8 +23,8 @@ export class BranchController {
   }
 
   @Get()
-  findAll() {
-    return this.branchService.findAll();
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.branchService.findAll(query);
   }
 
   @Get('count')

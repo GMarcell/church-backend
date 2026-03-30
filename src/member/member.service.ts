@@ -3,6 +3,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { Gender } from '@prisma/client';
 import { UpdateMemberDto } from './dto/update-member.dto';
+import {
+  createPaginatedResult,
+  getPaginationParams,
+} from '../common/utils/pagination.util';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Injectable()
 export class MemberService {
@@ -17,12 +22,23 @@ export class MemberService {
     });
   }
 
-  findAll() {
-    return this.prisma.member.findMany({
-      include: {
-        family: true,
-      },
-    });
+  async findAll(query: PaginationQueryDto) {
+    const { page, limit, skip } = getPaginationParams(query);
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.member.findMany({
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          family: true,
+        },
+      }),
+      this.prisma.member.count(),
+    ]);
+
+    return createPaginatedResult(items, total, page, limit);
   }
 
   findOne(id: string) {

@@ -6,10 +6,12 @@ import {
   Param,
   Delete,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { FamilyService } from './family.service';
 import { CreateFamilyDto } from './dto/create-family.dto';
 import { UpdateFamilyDto } from './dto/update-family.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Controller('v1/families')
 export class FamilyController {
@@ -21,8 +23,8 @@ export class FamilyController {
   }
 
   @Get()
-  findAll() {
-    return this.familyService.findAll();
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.familyService.findAll(query);
   }
 
   @Get('count')

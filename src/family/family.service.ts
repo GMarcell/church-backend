@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFamilyDto } from './dto/create-family.dto';
 import { UpdateFamilyDto } from './dto/update-family.dto';
+import {
+  createPaginatedResult,
+  getPaginationParams,
+} from '../common/utils/pagination.util';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Injectable()
 export class FamilyService {
@@ -19,13 +24,24 @@ export class FamilyService {
     });
   }
 
-  findAll() {
-    return this.prisma.family.findMany({
-      include: {
-        region: true,
-        members: true,
-      },
-    });
+  async findAll(query: PaginationQueryDto) {
+    const { page, limit, skip } = getPaginationParams(query);
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.family.findMany({
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          region: true,
+          members: true,
+        },
+      }),
+      this.prisma.family.count(),
+    ]);
+
+    return createPaginatedResult(items, total, page, limit);
   }
 
   findOne(id: string) {

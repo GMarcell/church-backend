@@ -3,6 +3,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import {
+  createPaginatedResult,
+  getPaginationParams,
+} from '../common/utils/pagination.util';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Injectable()
 export class UserService {
@@ -20,8 +25,20 @@ export class UserService {
     });
   }
 
-  findAll() {
-    return this.prisma.user.findMany();
+  async findAll(query: PaginationQueryDto) {
+    const { page, limit, skip } = getPaginationParams(query);
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return createPaginatedResult(items, total, page, limit);
   }
 
   findOne(id: string) {

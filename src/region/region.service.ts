@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
+import {
+  createPaginatedResult,
+  getPaginationParams,
+} from '../common/utils/pagination.util';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Injectable()
 export class RegionService {
@@ -18,13 +23,24 @@ export class RegionService {
     });
   }
 
-  findAll() {
-    return this.prisma.region.findMany({
-      include: {
-        branch: true,
-        families: true,
-      },
-    });
+  async findAll(query: PaginationQueryDto) {
+    const { page, limit, skip } = getPaginationParams(query);
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.region.findMany({
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          branch: true,
+          families: true,
+        },
+      }),
+      this.prisma.region.count(),
+    ]);
+
+    return createPaginatedResult(items, total, page, limit);
   }
 
   findOne(id: string) {

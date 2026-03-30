@@ -87,4 +87,5 @@ enum Role {
   ADMIN
   STAFF
   FINANCE
+  MEMBER
 }
