@@ -48,6 +48,18 @@ export class MemberController {
     return this.memberService.countAll();
   }
 
+  @Get('count/pelkat')
+  countAllPelkat() {
+    return this.memberService.countAllPelkat();
+  }
+
+  @Get('count/pelkat/:pelkat')
+  countByPelkat(
+    @Param('pelkat', new ParseEnumPipe(MemberPelkat)) pelkat: MemberPelkat,
+  ) {
+    return this.memberService.countByPelkat(pelkat);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.memberService.findOne(id);

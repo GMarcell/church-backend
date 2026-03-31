@@ -160,4 +160,94 @@ describe('MemberService', () => {
       );
     });
   });
+
+  describe('countByPelkat', () => {
+    it('counts members for a single pelkat', async () => {
+      const prisma = {
+        member: {
+          count: jest.fn().mockResolvedValue(7),
+        },
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          MemberService,
+          {
+            provide: PrismaService,
+            useValue: prisma,
+          },
+        ],
+      }).compile();
+
+      const localService = module.get<MemberService>(MemberService);
+      const result = await localService.countByPelkat(
+        MemberPelkat.PERSEKUTUAN_TARUNA,
+      );
+
+      expect(prisma.member.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            NOT: {
+              role: {
+                in: [MemberRole.FAMILY_HEAD, MemberRole.WIFE],
+              },
+            },
+          }),
+        }),
+      );
+      expect(result).toEqual({
+        pelkat: MemberPelkat.PERSEKUTUAN_TARUNA,
+        total: 7,
+      });
+    });
+  });
+
+  describe('countAllPelkat', () => {
+    it('returns totals for every pelkat', async () => {
+      const countMock = jest
+        .fn()
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(4)
+        .mockResolvedValueOnce(5)
+        .mockResolvedValueOnce(6)
+        .mockResolvedValueOnce(7)
+        .mockResolvedValueOnce(8);
+      const prisma = {
+        member: {
+          count: countMock,
+        },
+        $transaction: jest
+          .fn()
+          .mockImplementation((operations: Promise<unknown>[]) =>
+            Promise.all(operations),
+          ),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          MemberService,
+          {
+            provide: PrismaService,
+            useValue: prisma,
+          },
+        ],
+      }).compile();
+
+      const localService = module.get<MemberService>(MemberService);
+      const result = await localService.countAllPelkat();
+
+      expect(countMock).toHaveBeenCalledTimes(6);
+      expect(result).toEqual({
+        total: 33,
+        items: [
+          { pelkat: MemberPelkat.PELAYANAN_ANAK, total: 3 },
+          { pelkat: MemberPelkat.PERSEKUTUAN_TARUNA, total: 4 },
+          { pelkat: MemberPelkat.GERAKAN_PEMUDA, total: 5 },
+          { pelkat: MemberPelkat.PERSEKUTUAN_KAUM_BAPAK, total: 6 },
+          { pelkat: MemberPelkat.PERSEKUTUAN_KAUM_PEREMPUAN, total: 7 },
+          { pelkat: MemberPelkat.PERSEKUTUAN_KAUM_LANJUT_USIA, total: 8 },
+        ],
+      });
+    });
+  });
 });

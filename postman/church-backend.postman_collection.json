@@ -649,6 +649,47 @@
           "response": []
         },
         {
+          "name": "Count Members By All Pelkat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/member/count/pelkat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "member",
+                "count",
+                "pelkat"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Count Members By Pelkat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/member/count/pelkat/{{memberPelkat}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "member",
+                "count",
+                "pelkat",
+                "{{memberPelkat}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Get Member By Id",
           "request": {
             "method": "GET",

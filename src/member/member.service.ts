@@ -138,6 +138,36 @@ export class MemberService {
     };
   }
 
+  async countByPelkat(pelkat: MemberPelkat) {
+    const total = await this.prisma.member.count({
+      where: this.buildPelkatWhere(pelkat),
+    });
+
+    return {
+      pelkat,
+      total,
+    };
+  }
+
+  async countAllPelkat() {
+    const pelkats = Object.values(MemberPelkat);
+    const counts = await this.prisma.$transaction(
+      pelkats.map((pelkat) =>
+        this.prisma.member.count({
+          where: this.buildPelkatWhere(pelkat),
+        }),
+      ),
+    );
+
+    return {
+      total: counts.reduce((sum, count) => sum + count, 0),
+      items: pelkats.map((pelkat, index) => ({
+        pelkat,
+        total: counts[index],
+      })),
+    };
+  }
+
   private attachPelkat<T extends Member>(member: T): T & MemberWithPelkat {
     return {
       ...member,

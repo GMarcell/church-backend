@@ -7,6 +7,8 @@ describe('MemberController', () => {
   let controller: MemberController;
   const memberService = {
     findByPelkat: jest.fn(),
+    countAllPelkat: jest.fn(),
+    countByPelkat: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -40,6 +42,20 @@ describe('MemberController', () => {
         page: '1',
         limit: '10',
       },
+    );
+  });
+
+  it('delegates pelkat aggregate counts to the service', () => {
+    controller.countAllPelkat();
+
+    expect(memberService.countAllPelkat).toHaveBeenCalled();
+  });
+
+  it('delegates single pelkat count to the service', () => {
+    controller.countByPelkat(MemberPelkat.PERSEKUTUAN_KAUM_BAPAK);
+
+    expect(memberService.countByPelkat).toHaveBeenCalledWith(
+      MemberPelkat.PERSEKUTUAN_KAUM_BAPAK,
     );
   });
 });
