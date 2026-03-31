@@ -20,6 +20,20 @@ export class FamilyService {
         region: {
           connect: { id: dto.regionId },
         },
+        ...(dto.members?.length
+          ? {
+              members: {
+                create: dto.members.map((member) => ({
+                  ...member,
+                  birthDate: new Date(member.birthDate),
+                })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        region: true,
+        members: true,
       },
     });
   }

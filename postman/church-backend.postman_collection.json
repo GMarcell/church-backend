@@ -417,7 +417,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"familyName\": \"The Example Family\",\n  \"address\": \"123 Grace Street\",\n  \"regionId\": \"{{regionId}}\"\n}"
+              "raw": "{\n  \"familyName\": \"The Example Family\",\n  \"address\": \"123 Grace Street\",\n  \"regionId\": \"{{regionId}}\",\n  \"members\": [\n    {\n      \"name\": \"John Example\",\n      \"gender\": \"MALE\",\n      \"birthDate\": \"1990-01-15T00:00:00.000Z\",\n      \"phone\": \"+628123456789\",\n      \"email\": \"john.example@example.com\",\n      \"role\": \"FAMILY_HEAD\",\n      \"isActive\": true\n    },\n    {\n      \"name\": \"Jane Example\",\n      \"gender\": \"FEMALE\",\n      \"birthDate\": \"1992-03-20T00:00:00.000Z\",\n      \"phone\": \"+628123456780\",\n      \"email\": \"jane.example@example.com\",\n      \"role\": \"WIFE\",\n      \"isActive\": true\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/v1/families",
