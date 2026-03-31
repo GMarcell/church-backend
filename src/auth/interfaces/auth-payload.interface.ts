@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { MemberRole, Role } from '@prisma/client';
 
 export interface AuthPayload {
   sub: string;
@@ -7,4 +7,6 @@ export interface AuthPayload {
   role?: Role;
   memberId?: string;
   name?: string;
+  familyId?: string;
+  memberRole?: MemberRole;
 }

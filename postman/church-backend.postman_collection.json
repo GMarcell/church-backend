@@ -27,6 +27,10 @@
       "value": ""
     },
     {
+      "key": "memberPelkat",
+      "value": "Gerakan Pemuda"
+    },
+    {
       "key": "attendanceId",
       "value": ""
     },
@@ -590,6 +594,36 @@
               "path": [
                 "v1",
                 "member"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Members By Pelkat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/member/pelkat/{{memberPelkat}}?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "member",
+                "pelkat",
+                "{{memberPelkat}}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           },

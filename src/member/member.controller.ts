@@ -10,6 +10,7 @@ import {
   Req,
   ForbiddenException,
   Query,
+  ParseEnumPipe,
 } from '@nestjs/common';
 import { MemberService } from './member.service';
 import { CreateMemberDto } from './dto/create-member.dto';
@@ -17,6 +18,8 @@ import { UpdateMemberDto } from './dto/update-member.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthPayload } from '../auth/interfaces/auth-payload.interface';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { MemberRole } from '@prisma/client';
+import { MemberPelkat } from './member-pelkat.enum';
 
 @Controller('v1/member')
 export class MemberController {
@@ -30,6 +33,14 @@ export class MemberController {
   @Get()
   findAll(@Query() query: PaginationQueryDto) {
     return this.memberService.findAll(query);
+  }
+
+  @Get('pelkat/:pelkat')
+  findByPelkat(
+    @Param('pelkat', new ParseEnumPipe(MemberPelkat)) pelkat: MemberPelkat,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.memberService.findByPelkat(pelkat, query);
   }
 
   @Get('count')
@@ -49,8 +60,30 @@ export class MemberController {
     @Body() dto: UpdateMemberDto,
     @Req() req: Request & { user: AuthPayload },
   ) {
-    if (req.user.authType === 'member' && req.user.sub !== id) {
-      throw new ForbiddenException('Members can only edit their own data');
+    if (req.user.authType === 'member') {
+      if (dto.familyId !== undefined || dto.role !== undefined) {
+        throw new ForbiddenException(
+          'Members cannot change family assignment or member role',
+        );
+      }
+
+      if (req.user.sub !== id) {
+        if (req.user.memberRole !== MemberRole.FAMILY_HEAD) {
+          throw new ForbiddenException('Members can only edit their own data');
+        }
+
+        const targetMember = this.memberService.findOne(id);
+
+        return targetMember.then((member) => {
+          if (!member || member.familyId !== req.user.familyId) {
+            throw new ForbiddenException(
+              'Family heads can only edit members in their own family',
+            );
+          }
+
+          return this.memberService.update(id, dto);
+        });
+      }
     }
 
     return this.memberService.update(id, dto);

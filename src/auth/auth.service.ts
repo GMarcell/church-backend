@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Role } from '@prisma/client';
+import { MemberRole, Role } from '@prisma/client';
 import { AuthPayload } from './interfaces/auth-payload.interface';
 
 @Injectable()
@@ -96,8 +96,11 @@ export class AuthService {
     const payload: AuthPayload = {
       sub: member.id,
       authType: 'member',
+      role: Role.MEMBER,
       memberId: member.id,
       name: member.name,
+      familyId: member.familyId,
+      memberRole: member.role,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -114,6 +117,7 @@ export class AuthService {
       member: {
         id: member.id,
         name: member.name,
+        role: member.role,
       },
     };
   }
