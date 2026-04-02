@@ -18,7 +18,7 @@ import { UpdateMemberDto } from './dto/update-member.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthPayload } from '../auth/interfaces/auth-payload.interface';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
-import { MemberRole } from '@prisma/client';
+import { MemberRole, Role } from '@prisma/client';
 import { MemberPelkat } from './member-pelkat.enum';
 
 @Controller('v1/member')
@@ -67,7 +67,7 @@ export class MemberController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() dto: UpdateMemberDto,
     @Req() req: Request & { user: AuthPayload },
@@ -84,17 +84,34 @@ export class MemberController {
           throw new ForbiddenException('Members can only edit their own data');
         }
 
-        const targetMember = this.memberService.findOne(id);
+        const member = await this.memberService.findOne(id);
+        if (!member || member.familyId !== req.user.familyId) {
+          throw new ForbiddenException(
+            'Family heads can only edit members in their own family',
+          );
+        }
+      }
+    }
 
-        return targetMember.then((member) => {
-          if (!member || member.familyId !== req.user.familyId) {
-            throw new ForbiddenException(
-              'Family heads can only edit members in their own family',
-            );
-          }
+    if (req.user.authType === 'user' && req.user.role === Role.COORDINATOR) {
+      const member = await this.memberService.findOne(id);
 
-          return this.memberService.update(id, dto);
-        });
+      if (!member || member.family.regionId !== req.user.regionId) {
+        throw new ForbiddenException(
+          'Coordinators can only edit members in their own region',
+        );
+      }
+
+      if (dto.familyId !== undefined) {
+        const targetRegionId = await this.memberService.findFamilyRegionId(
+          dto.familyId,
+        );
+
+        if (!targetRegionId || targetRegionId !== req.user.regionId) {
+          throw new ForbiddenException(
+            'Coordinators cannot move members to another region',
+          );
+        }
       }
     }
 

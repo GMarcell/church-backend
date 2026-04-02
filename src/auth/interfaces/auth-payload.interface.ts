@@ -5,6 +5,7 @@ export interface AuthPayload {
   authType: 'user' | 'member';
   email?: string;
   role?: Role;
+  regionId?: string;
   memberId?: string;
   name?: string;
   familyId?: string;

@@ -112,6 +112,17 @@ export class MemberService {
     return this.attachPelkat(member);
   }
 
+  async findFamilyRegionId(familyId: string) {
+    const family = await this.prisma.family.findUnique({
+      where: { id: familyId },
+      select: {
+        regionId: true,
+      },
+    });
+
+    return family?.regionId;
+  }
+
   remove(id: string) {
     return this.prisma.member.delete({
       where: { id },
@@ -175,7 +186,9 @@ export class MemberService {
     };
   }
 
-  private determinePelkat(member: Pick<Member, 'birthDate' | 'gender' | 'role'>) {
+  private determinePelkat(
+    member: Pick<Member, 'birthDate' | 'gender' | 'role'>,
+  ) {
     const age = this.calculateAge(member.birthDate);
     const isMarried =
       member.role === MemberRole.FAMILY_HEAD || member.role === MemberRole.WIFE;

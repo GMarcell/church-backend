@@ -21,6 +21,7 @@ model Region {
   branchId  String
   branch    Branch   @relation(fields: [branchId], references: [id])
   families  Family[]
+  users     User[]
   createdAt DateTime @default(now())
 }
 
@@ -81,6 +82,8 @@ model User {
   email     String   @unique
   password  String
   role      Role
+  regionId  String?
+  region    Region?  @relation(fields: [regionId], references: [id])
   createdAt DateTime @default(now())
 }
 
@@ -88,5 +91,6 @@ enum Role {
   ADMIN
   STAFF
   FINANCE
+  COORDINATOR
   MEMBER
 }

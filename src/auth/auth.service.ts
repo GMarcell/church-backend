@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -20,7 +24,13 @@ export class AuthService {
     return `${day}-${month}-${year}`;
   }
 
-  async register(email: string, password: string, role: Role) {
+  async register(
+    email: string,
+    password: string,
+    role: Role,
+    regionId?: string,
+  ) {
+    this.validateCoordinatorAssignment(role, regionId);
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.prisma.user.create({
@@ -28,6 +38,14 @@ export class AuthService {
         email,
         password: hashedPassword,
         role,
+        ...(regionId !== undefined && {
+          region: {
+            connect: { id: regionId },
+          },
+        }),
+      },
+      include: {
+        region: true,
       },
     });
 
@@ -37,6 +55,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         role: user.role,
+        regionId: user.regionId,
       },
     };
   }
@@ -61,6 +80,7 @@ export class AuthService {
       authType: 'user',
       email: user.email,
       role: user.role,
+      regionId: user.regionId ?? undefined,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -71,6 +91,7 @@ export class AuthService {
       user: {
         email: user.email,
         role: user.role,
+        regionId: user.regionId,
       },
     };
   }
@@ -120,5 +141,19 @@ export class AuthService {
         role: member.role,
       },
     };
+  }
+
+  private validateCoordinatorAssignment(role: Role, regionId?: string) {
+    if (role === Role.COORDINATOR && !regionId) {
+      throw new BadRequestException(
+        'Coordinator users must be assigned to a region',
+      );
+    }
+
+    if (role !== Role.COORDINATOR && regionId) {
+      throw new BadRequestException(
+        'Only coordinator users can be assigned to a region',
+      );
+    }
   }
 }

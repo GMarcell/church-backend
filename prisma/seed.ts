@@ -122,6 +122,12 @@ async function main() {
         password: await bcrypt.hash('finance123', 10),
         role: Role.FINANCE,
       },
+      {
+        email: 'coordinator.regiona@example.com',
+        password: await bcrypt.hash('coordinator123', 10),
+        role: Role.COORDINATOR,
+        regionId: region1.id,
+      },
     ],
   });
 

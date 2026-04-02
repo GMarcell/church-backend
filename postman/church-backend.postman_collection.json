@@ -39,6 +39,10 @@
       "value": ""
     },
     {
+      "key": "coordinatorUserId",
+      "value": ""
+    },
+    {
       "key": "accessToken",
       "value": ""
     }
@@ -47,6 +51,88 @@
     {
       "name": "Auth",
       "item": [
+        {
+          "name": "Register Coordinator User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.user && json.data.user.id) {",
+                  "  pm.collectionVariables.set('coordinatorUserId', json.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"coordinator.regiona@example.com\",\n  \"password\": \"coordinator123\",\n  \"role\": \"COORDINATOR\",\n  \"regionId\": \"{{regionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.access_token) {",
+                  "  pm.collectionVariables.set('accessToken', json.data.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\",\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
         {
           "name": "Member Login",
           "event": [
@@ -362,6 +448,72 @@
                 "v1",
                 "regions",
                 "{{regionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Region Coordinator",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordinatorId\": \"{{coordinatorUserId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/regions/{{regionId}}/coordinator",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "regions",
+                "{{regionId}}",
+                "coordinator"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear Region Coordinator",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordinatorId\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/regions/{{regionId}}/coordinator",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "regions",
+                "{{regionId}}",
+                "coordinator"
               ]
             }
           },
@@ -900,6 +1052,9 @@
                   "const json = pm.response.json();",
                   "if (json && json.data && json.data.id) {",
                   "  pm.collectionVariables.set('userId', json.data.id);",
+                  "}",
+                  "if (json && json.data && json.data.role === 'COORDINATOR') {",
+                  "  pm.collectionVariables.set('coordinatorUserId', json.data.id);",
                   "}"
                 ]
               }
@@ -915,7 +1070,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"staff@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"STAFF\"\n}"
+              "raw": "{\n  \"email\": \"coordinator.user@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"COORDINATOR\",\n  \"regionId\": \"{{regionId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/users",
@@ -976,7 +1131,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"updated.staff@example.com\",\n  \"password\": \"newsecret123\",\n  \"role\": \"ADMIN\"\n}"
+              "raw": "{\n  \"email\": \"updated.coordinator@example.com\",\n  \"password\": \"newsecret123\",\n  \"role\": \"COORDINATOR\",\n  \"regionId\": \"{{regionId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}",
