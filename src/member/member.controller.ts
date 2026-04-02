@@ -73,6 +73,30 @@ export class MemberController {
     @Req() req: Request & { user: AuthPayload },
   ) {
     if (req.user.authType === 'member') {
+      if (req.user.isRegionCoordinator) {
+        const member = await this.memberService.findOne(id);
+
+        if (!member || member.family.regionId !== req.user.regionId) {
+          throw new ForbiddenException(
+            'Coordinators can only edit members in their own region',
+          );
+        }
+
+        if (dto.familyId !== undefined) {
+          const targetRegionId = await this.memberService.findFamilyRegionId(
+            dto.familyId,
+          );
+
+          if (!targetRegionId || targetRegionId !== req.user.regionId) {
+            throw new ForbiddenException(
+              'Coordinators cannot move members to another region',
+            );
+          }
+        }
+
+        return this.memberService.update(id, dto);
+      }
+
       if (dto.familyId !== undefined || dto.role !== undefined) {
         throw new ForbiddenException(
           'Members cannot change family assignment or member role',

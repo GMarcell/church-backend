@@ -39,10 +39,6 @@
       "value": ""
     },
     {
-      "key": "coordinatorUserId",
-      "value": ""
-    },
-    {
       "key": "accessToken",
       "value": ""
     }
@@ -52,48 +48,7 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Register Coordinator User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.data && json.data.user && json.data.user.id) {",
-                  "  pm.collectionVariables.set('coordinatorUserId', json.data.user.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"coordinator.regiona@example.com\",\n  \"password\": \"coordinator123\",\n  \"role\": \"COORDINATOR\",\n  \"regionId\": \"{{regionId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login User",
+          "name": "Login Admin User",
           "event": [
             {
               "listen": "test",
@@ -469,7 +424,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"coordinatorId\": \"{{coordinatorUserId}}\"\n}"
+              "raw": "{\n  \"memberId\": \"{{memberId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/v1/regions/{{regionId}}/coordinator",
@@ -502,7 +457,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"coordinatorId\": null\n}"
+              "raw": "{\n  \"memberId\": null\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/v1/regions/{{regionId}}/coordinator",
@@ -1052,9 +1007,6 @@
                   "const json = pm.response.json();",
                   "if (json && json.data && json.data.id) {",
                   "  pm.collectionVariables.set('userId', json.data.id);",
-                  "}",
-                  "if (json && json.data && json.data.role === 'COORDINATOR') {",
-                  "  pm.collectionVariables.set('coordinatorUserId', json.data.id);",
                   "}"
                 ]
               }
@@ -1070,7 +1022,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"coordinator.user@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"COORDINATOR\",\n  \"regionId\": \"{{regionId}}\"\n}"
+              "raw": "{\n  \"email\": \"staff@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"STAFF\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/users",
@@ -1131,7 +1083,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"updated.coordinator@example.com\",\n  \"password\": \"newsecret123\",\n  \"role\": \"COORDINATOR\",\n  \"regionId\": \"{{regionId}}\"\n}"
+              "raw": "{\n  \"email\": \"updated.staff@example.com\",\n  \"password\": \"newsecret123\",\n  \"role\": \"ADMIN\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}",

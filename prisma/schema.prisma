@@ -16,13 +16,15 @@ model Branch {
 }
 
 model Region {
-  id        String   @id @default(uuid())
-  name      String
-  branchId  String
-  branch    Branch   @relation(fields: [branchId], references: [id])
-  families  Family[]
-  users     User[]
-  createdAt DateTime @default(now())
+  id                  String   @id @default(uuid())
+  name                String
+  branchId            String
+  branch              Branch   @relation(fields: [branchId], references: [id])
+  families            Family[]
+  users               User[]
+  coordinatorMemberId String?  @unique
+  coordinator         Member?  @relation("RegionCoordinator", fields: [coordinatorMemberId], references: [id])
+  createdAt           DateTime @default(now())
 }
 
 model Family {
@@ -36,17 +38,17 @@ model Family {
 }
 
 model Member {
-  id        String     @id @default(uuid())
-  name      String
-  gender    Gender
-  birthDate DateTime
-  phone     String?
-  email     String?
-  role      MemberRole
-  isActive  Boolean    @default(true)
-
-  familyId String
-  family   Family @relation(fields: [familyId], references: [id])
+  id                String   @id @default(uuid())
+  name              String
+  gender            Gender
+  birthDate         DateTime
+  phone             String?
+  email             String?
+  role              MemberRole
+  isActive          Boolean  @default(true)
+  familyId          String
+  family            Family   @relation(fields: [familyId], references: [id])
+  coordinatedRegion Region?  @relation("RegionCoordinator")
 
   createdAt DateTime @default(now())
 }

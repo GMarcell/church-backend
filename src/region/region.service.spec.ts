@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RegionService } from './region.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
 
 describe('RegionService', () => {
   let service: RegionService;
@@ -15,12 +14,9 @@ describe('RegionService', () => {
       delete: jest.fn(),
       count: jest.fn(),
     },
-    user: {
+    member: {
       findUnique: jest.fn(),
-      updateMany: jest.fn(),
-      update: jest.fn(),
     },
-    $transaction: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -48,21 +44,21 @@ describe('RegionService', () => {
       name: 'Region A',
       branch: { id: 'branch-1', name: 'Central Branch' },
       families: [],
-      users: [
-        {
-          id: 'user-1',
-          email: 'coord@example.com',
-          role: Role.COORDINATOR,
+      coordinator: {
+        id: 'member-1',
+        name: 'Coordinator Member',
+        email: 'coord@example.com',
+        family: {
+          id: 'family-1',
           regionId: 'region-1',
-          createdAt: new Date('2026-04-02T00:00:00.000Z'),
         },
-      ],
+      },
     });
 
     await expect(service.findOne('region-1')).resolves.toMatchObject({
       id: 'region-1',
       coordinator: {
-        id: 'user-1',
+        id: 'member-1',
         email: 'coord@example.com',
       },
     });
@@ -72,58 +68,46 @@ describe('RegionService', () => {
     prismaService.region.findUniqueOrThrow.mockResolvedValue({
       id: 'region-1',
     });
-    prismaService.user.findUnique.mockResolvedValue({
-      id: 'user-2',
-      role: Role.COORDINATOR,
-      regionId: null,
+    prismaService.member.findUnique.mockResolvedValue({
+      id: 'member-2',
+      family: {
+        regionId: 'region-1',
+      },
+      coordinatedRegion: null,
     });
-    prismaService.user.updateMany.mockReturnValue('clear-existing');
-    prismaService.user.update.mockReturnValue('assign-user');
-    prismaService.$transaction.mockImplementation(
-      async (operations) => operations,
-    );
+    prismaService.region.update.mockResolvedValue({
+      id: 'region-1',
+    });
     prismaService.region.findUnique.mockResolvedValue({
       id: 'region-1',
       name: 'Region A',
       branch: { id: 'branch-1', name: 'Central Branch' },
       families: [],
-      users: [
-        {
-          id: 'user-2',
-          email: 'coord@example.com',
-          role: Role.COORDINATOR,
+      coordinator: {
+        id: 'member-2',
+        name: 'Coordinator Member',
+        email: 'coord@example.com',
+        family: {
+          id: 'family-2',
           regionId: 'region-1',
-          createdAt: new Date('2026-04-02T00:00:00.000Z'),
         },
-      ],
+      },
     });
 
     await expect(
-      service.assignCoordinator('region-1', 'user-2'),
+      service.assignCoordinator('region-1', 'member-2'),
     ).resolves.toMatchObject({
       id: 'region-1',
       coordinator: {
-        id: 'user-2',
+        id: 'member-2',
       },
     });
 
-    expect(prismaService.user.updateMany).toHaveBeenCalledWith({
-      where: {
-        regionId: 'region-1',
-        role: Role.COORDINATOR,
-        NOT: {
-          id: 'user-2',
-        },
-      },
+    expect(prismaService.region.update).toHaveBeenCalledWith({
+      where: { id: 'region-1' },
       data: {
-        regionId: null,
-      },
-    });
-    expect(prismaService.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-2' },
-      data: {
-        region: {
-          connect: { id: 'region-1' },
+        coordinator: {
+          connect: { id: 'member-2' },
         },
       },
     });

@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
-import { Role } from '@prisma/client';
 import { FamilyController } from './family.controller';
 import { FamilyService } from './family.service';
 
@@ -43,10 +42,10 @@ describe('FamilyController', () => {
     await expect(
       controller.update('family-1', { familyName: 'Updated Family' }, {
         user: {
-          authType: 'user',
-          role: Role.COORDINATOR,
+          authType: 'member',
+          isRegionCoordinator: true,
           regionId: 'region-1',
-          sub: 'user-1',
+          sub: 'member-1',
         },
       } as any),
     ).resolves.toEqual({
@@ -68,10 +67,10 @@ describe('FamilyController', () => {
     await expect(
       controller.update('family-1', { familyName: 'Updated Family' }, {
         user: {
-          authType: 'user',
-          role: Role.COORDINATOR,
+          authType: 'member',
+          isRegionCoordinator: true,
           regionId: 'region-1',
-          sub: 'user-1',
+          sub: 'member-1',
         },
       } as any),
     ).rejects.toBeInstanceOf(ForbiddenException);

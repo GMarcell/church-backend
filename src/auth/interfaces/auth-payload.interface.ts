@@ -6,6 +6,7 @@ export interface AuthPayload {
   email?: string;
   role?: Role;
   regionId?: string;
+  isRegionCoordinator?: boolean;
   memberId?: string;
   name?: string;
   familyId?: string;

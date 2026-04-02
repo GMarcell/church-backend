@@ -51,7 +51,25 @@ export class FamilyController {
     @Req() req: Request & { user: AuthPayload },
   ) {
     if (req.user.authType === 'member') {
-      throw new ForbiddenException('Members cannot edit family data');
+      if (!req.user.isRegionCoordinator) {
+        throw new ForbiddenException('Members cannot edit family data');
+      }
+
+      const family = await this.familyService.findOne(id);
+
+      if (!family || family.regionId !== req.user.regionId) {
+        throw new ForbiddenException(
+          'Coordinators can only edit families in their own region',
+        );
+      }
+
+      if (dto.regionId !== undefined && dto.regionId !== req.user.regionId) {
+        throw new ForbiddenException(
+          'Coordinators cannot move families to another region',
+        );
+      }
+
+      return this.familyService.update(id, dto);
     }
 
     if (req.user.role === Role.COORDINATOR) {

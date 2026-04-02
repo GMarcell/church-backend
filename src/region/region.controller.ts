@@ -48,7 +48,7 @@ export class RegionController {
     @Param('id') id: string,
     @Body() dto: AssignRegionCoordinatorDto,
   ) {
-    return this.regionService.assignCoordinator(id, dto.coordinatorId ?? null);
+    return this.regionService.assignCoordinator(id, dto.memberId ?? null);
   }
 
   @Delete(':id')

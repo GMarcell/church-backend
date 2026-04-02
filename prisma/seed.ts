@@ -84,6 +84,21 @@ async function main() {
     }
   }
 
+  const regionCoordinatorMember = members[0];
+
+  if (regionCoordinatorMember) {
+    await prisma.region.update({
+      where: {
+        id: region1.id,
+      },
+      data: {
+        coordinator: {
+          connect: { id: regionCoordinatorMember.id },
+        },
+      },
+    });
+  }
+
   // --- Seed Attendance ---
   await prisma.attendance.createMany({
     data: [

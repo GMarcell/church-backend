@@ -104,6 +104,18 @@ export class AuthService {
           mode: 'insensitive',
         },
       },
+      include: {
+        family: {
+          select: {
+            regionId: true,
+          },
+        },
+        coordinatedRegion: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
 
     const member = members.find(
@@ -121,6 +133,8 @@ export class AuthService {
       memberId: member.id,
       name: member.name,
       familyId: member.familyId,
+      regionId: member.family.regionId,
+      isRegionCoordinator: Boolean(member.coordinatedRegion),
       memberRole: member.role,
     };
 
@@ -139,6 +153,8 @@ export class AuthService {
         id: member.id,
         name: member.name,
         role: member.role,
+        regionId: member.family.regionId,
+        isRegionCoordinator: Boolean(member.coordinatedRegion),
       },
     };
   }

@@ -16,6 +16,7 @@ Backend API for church management features built with NestJS and Prisma.
 - User management
 - Branch management
 - Region management
+- Region coordinator assignment
 - Family management
 - Member management
 - Attendance management
@@ -103,9 +104,42 @@ Most routes use the `/api` prefix.
 Examples:
 
 - `GET /api`
+- `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/member-login`
 - `GET /api/users`
+- `GET /api/v1/regions`
+- `PATCH /api/v1/regions/:id/coordinator`
+
+## Coordinator Role
+
+The backend supports assigning a region coordinator from an existing `Member` in that same region.
+
+Current behavior:
+
+- Region responses include a `coordinator` field on `GET /api/v1/regions` and `GET /api/v1/regions/:id`
+- Region coordinator assignment is available through `PATCH /api/v1/regions/:id/coordinator`
+- The selected coordinator must be a member whose family belongs to that region
+- Members who are assigned as region coordinators can edit family and member data inside their own region
+
+Example assign request:
+
+```http
+PATCH /api/v1/regions/:id/coordinator
+Content-Type: application/json
+
+{
+  "memberId": "member-id"
+}
+```
+
+To clear a coordinator from a region:
+
+```json
+{
+  "memberId": null
+}
+```
 
 ## Health Check
 
@@ -145,6 +179,7 @@ Seeded user accounts:
 - `admin@example.com` / `admin123`
 - `staff@example.com` / `staff123`
 - `finance@example.com` / `finance123`
+- `coordinator.regiona@example.com` / `coordinator123`
 
 Important:
 
@@ -204,6 +239,12 @@ prisma/
 A Postman collection is available in:
 
 [postman/church-backend.postman_collection.json](/home/admin-ubuntu/grand/church-sytem/church-backend/postman/church-backend.postman_collection.json)
+
+The collection includes:
+
+- Member login and admin login examples
+- Region coordinator assignment and clear requests
+- Requests for selecting a region coordinator from an existing member
 
 ## Troubleshooting
 

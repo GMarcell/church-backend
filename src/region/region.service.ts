@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
@@ -42,12 +41,9 @@ export class RegionService {
         include: {
           branch: true,
           families: true,
-          users: {
-            where: {
-              role: Role.COORDINATOR,
-            },
-            orderBy: {
-              createdAt: 'asc',
+          coordinator: {
+            include: {
+              family: true,
             },
           },
         },
@@ -55,32 +51,22 @@ export class RegionService {
       this.prisma.region.count(),
     ]);
 
-    return createPaginatedResult(
-      items.map((item) => this.attachCoordinator(item)),
-      total,
-      page,
-      limit,
-    );
+    return createPaginatedResult(items, total, page, limit);
   }
 
   async findOne(id: string) {
-    const region = await this.prisma.region.findUnique({
+    return this.prisma.region.findUnique({
       where: { id },
       include: {
         branch: true,
         families: true,
-        users: {
-          where: {
-            role: Role.COORDINATOR,
-          },
-          orderBy: {
-            createdAt: 'asc',
+        coordinator: {
+          include: {
+            family: true,
           },
         },
       },
     });
-
-    return region ? this.attachCoordinator(region) : null;
   }
 
   async update(id: string, dto: UpdateRegionDto) {
@@ -106,60 +92,66 @@ export class RegionService {
   }
 
   async assignCoordinator(regionId: string, coordinatorId: string | null) {
-    await this.prisma.region.findUniqueOrThrow({
+    const region = await this.prisma.region.findUniqueOrThrow({
       where: { id: regionId },
     });
 
     if (coordinatorId === null) {
-      await this.prisma.user.updateMany({
-        where: {
-          regionId,
-          role: Role.COORDINATOR,
-        },
+      await this.prisma.region.update({
+        where: { id: regionId },
         data: {
-          regionId: null,
+          coordinator: {
+            disconnect: true,
+          },
         },
       });
 
       return this.findOneOrThrow(regionId);
     }
 
-    const coordinator = await this.prisma.user.findUnique({
+    const coordinator = await this.prisma.member.findUnique({
       where: { id: coordinatorId },
+      include: {
+        family: {
+          select: {
+            regionId: true,
+          },
+        },
+        coordinatedRegion: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
 
     if (!coordinator) {
-      throw new NotFoundException('Coordinator user not found');
+      throw new NotFoundException('Coordinator member not found');
     }
 
-    if (coordinator.role !== Role.COORDINATOR) {
+    if (coordinator.family.regionId !== regionId) {
       throw new BadRequestException(
-        'Only users with coordinator role can be assigned to a region',
+        'Coordinator member must belong to the same region',
       );
     }
 
-    await this.prisma.$transaction([
-      this.prisma.user.updateMany({
-        where: {
-          regionId,
-          role: Role.COORDINATOR,
-          NOT: {
-            id: coordinatorId,
-          },
+    if (
+      coordinator.coordinatedRegion &&
+      coordinator.coordinatedRegion.id !== region.id
+    ) {
+      throw new BadRequestException(
+        'This member is already assigned as coordinator for another region',
+      );
+    }
+
+    await this.prisma.region.update({
+      where: { id: regionId },
+      data: {
+        coordinator: {
+          connect: { id: coordinatorId },
         },
-        data: {
-          regionId: null,
-        },
-      }),
-      this.prisma.user.update({
-        where: { id: coordinatorId },
-        data: {
-          region: {
-            connect: { id: regionId },
-          },
-        },
-      }),
-    ]);
+      },
+    });
 
     return this.findOneOrThrow(regionId);
   }
@@ -174,6 +166,14 @@ export class RegionService {
             families: true,
           },
         },
+        coordinator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            familyId: true,
+          },
+        },
       },
     });
 
@@ -181,6 +181,7 @@ export class RegionService {
       id: r.id,
       regionName: r.name,
       totalFamilies: r._count.families,
+      coordinator: r.coordinator,
     }));
   }
 
@@ -192,25 +193,5 @@ export class RegionService {
     }
 
     return region;
-  }
-
-  private attachCoordinator<
-    T extends {
-      users?: Array<{
-        id: string;
-        email: string;
-        role: Role;
-        regionId: string | null;
-        createdAt: Date;
-      }>;
-    },
-  >(region: T) {
-    const { users, ...rest } = region;
-    const [coordinator] = users ?? [];
-
-    return {
-      ...rest,
-      coordinator: coordinator ?? null,
-    };
   }
 }

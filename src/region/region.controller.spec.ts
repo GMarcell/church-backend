@@ -29,12 +29,12 @@ describe('RegionController', () => {
 
   it('assigns a coordinator through the region service', () => {
     controller.assignCoordinator('region-1', {
-      coordinatorId: 'user-1',
+      memberId: 'member-1',
     });
 
     expect(regionService.assignCoordinator).toHaveBeenCalledWith(
       'region-1',
-      'user-1',
+      'member-1',
     );
   });
 });
