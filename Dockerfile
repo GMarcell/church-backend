@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
 
-RUN npm ci
+RUN npm install
 RUN npx prisma generate
 
 COPY . .
@@ -22,7 +22,7 @@ ENV PORT=3000
 COPY package*.json ./
 COPY prisma ./prisma
 
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 RUN npx prisma generate
 
 COPY --from=builder /app/dist ./dist
