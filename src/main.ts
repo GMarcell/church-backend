@@ -15,7 +15,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      'https://church-frontend-five.vercel.app/',
+      'https://church-frontend-five.vercel.app',
     ],
     credentials: true,
   });
