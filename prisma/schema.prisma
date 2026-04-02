@@ -46,6 +46,8 @@ model Member {
   email             String?
   role              MemberRole
   isActive          Boolean  @default(true)
+  isDeceased        Boolean  @default(false)
+  deathDate         DateTime?
   familyId          String
   family            Family   @relation(fields: [familyId], references: [id])
   coordinatedRegion Region?  @relation("RegionCoordinator")

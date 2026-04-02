@@ -129,7 +129,6 @@ export class AuthService {
     const payload: AuthPayload = {
       sub: member.id,
       authType: 'member',
-      role: Role.MEMBER,
       memberId: member.id,
       name: member.name,
       familyId: member.familyId,
@@ -146,7 +145,6 @@ export class AuthService {
       user: member.email
         ? {
             email: member.email,
-            role: Role.MEMBER,
           }
         : undefined,
       member: {

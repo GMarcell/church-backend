@@ -250,4 +250,146 @@ describe('MemberService', () => {
       });
     });
   });
+
+  describe('markAsDeceased', () => {
+    it('marks a family head deceased and promotes the replacement head', async () => {
+      const prisma = {
+        member: {
+          findUnique: jest
+            .fn()
+            .mockResolvedValueOnce({
+              id: 'member-1',
+              familyId: 'family-1',
+              role: MemberRole.FAMILY_HEAD,
+              isDeceased: false,
+              family: {
+                id: 'family-1',
+                regionId: 'region-1',
+              },
+            })
+            .mockResolvedValueOnce({
+              id: 'member-1',
+              familyId: 'family-1',
+              role: MemberRole.OTHER,
+              isActive: false,
+              isDeceased: true,
+              birthDate: new Date('1980-01-01T00:00:00.000Z'),
+              gender: Gender.MALE,
+              family: {
+                id: 'family-1',
+                regionId: 'region-1',
+              },
+            }),
+        },
+        $transaction: jest.fn().mockImplementation(async (callback) =>
+          callback({
+            member: {
+              findMany: jest.fn().mockResolvedValue([{ id: 'member-2' }]),
+              findFirst: jest.fn().mockResolvedValue({
+                id: 'member-2',
+                familyId: 'family-1',
+              }),
+              update: jest.fn().mockResolvedValue({}),
+            },
+          }),
+        ),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          MemberService,
+          {
+            provide: PrismaService,
+            useValue: prisma,
+          },
+        ],
+      }).compile();
+
+      const localService = module.get<MemberService>(MemberService);
+      const result = await localService.markAsDeceased('member-1', {
+        newFamilyHeadId: 'member-2',
+      });
+
+      expect(result).toMatchObject({
+        id: 'member-1',
+        isDeceased: true,
+        pelkat: MemberPelkat.PERSEKUTUAN_KAUM_BAPAK,
+      });
+    });
+  });
+
+  describe('createFamilyFromMarriage', () => {
+    it('creates a new family and moves the member there', async () => {
+      const createdFamily = {
+        id: 'family-2',
+        familyName: 'New Family',
+        members: [],
+        region: {
+          id: 'region-1',
+          name: 'Region 1',
+          branchId: 'branch-1',
+          coordinatorMemberId: null,
+          createdAt: new Date(),
+        },
+      };
+      const tx = {
+        member: {
+          update: jest.fn().mockResolvedValue({}),
+          create: jest.fn().mockResolvedValue({}),
+        },
+        family: {
+          create: jest.fn().mockResolvedValue({ id: 'family-2' }),
+          findUnique: jest.fn().mockResolvedValue(createdFamily),
+        },
+      };
+      const prisma = {
+        member: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'member-1',
+            familyId: 'family-1',
+            role: MemberRole.CHILD,
+            isActive: true,
+            isDeceased: false,
+            gender: Gender.MALE,
+            family: {
+              id: 'family-1',
+              regionId: 'region-1',
+            },
+          }),
+        },
+        $transaction: jest.fn().mockImplementation(async (callback) =>
+          callback(tx),
+        ),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          MemberService,
+          {
+            provide: PrismaService,
+            useValue: prisma,
+          },
+        ],
+      }).compile();
+
+      const localService = module.get<MemberService>(MemberService);
+      const result = await localService.createFamilyFromMarriage('member-1', {
+        familyName: 'New Family',
+        spouse: {
+          name: 'Spouse',
+          gender: Gender.FEMALE,
+          birthDate: '1995-01-01T00:00:00.000Z',
+        },
+      });
+
+      expect(tx.family.create).toHaveBeenCalled();
+      expect(tx.member.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'member-1' },
+        }),
+      );
+      expect(tx.member.create).toHaveBeenCalled();
+      expect(result).toEqual(createdFamily);
+    });
+  });
 });

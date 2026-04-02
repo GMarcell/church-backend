@@ -13,6 +13,8 @@ describe('MemberController', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     findFamilyRegionId: jest.fn(),
+    markAsDeceased: jest.fn(),
+    createFamilyFromMarriage: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -119,5 +121,78 @@ describe('MemberController', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
 
     expect(memberService.update).not.toHaveBeenCalled();
+  });
+
+  it('delegates marking a member as deceased after authorization', async () => {
+    memberService.findOne.mockResolvedValue({
+      id: 'member-1',
+      familyId: 'family-1',
+      family: {
+        id: 'family-1',
+        regionId: 'region-1',
+      },
+    });
+    memberService.markAsDeceased.mockResolvedValue({
+      id: 'member-1',
+      isDeceased: true,
+    });
+
+    await expect(
+      controller.markAsDeceased(
+        'member-1',
+        { deathDate: '2026-04-02T00:00:00.000Z' },
+        {
+          user: {
+            authType: 'user',
+            role: 'ADMIN',
+            sub: 'user-1',
+          },
+        } as any,
+      ),
+    ).resolves.toEqual({
+      id: 'member-1',
+      isDeceased: true,
+    });
+
+    expect(memberService.markAsDeceased).toHaveBeenCalledWith('member-1', {
+      deathDate: '2026-04-02T00:00:00.000Z',
+    });
+  });
+
+  it('delegates marriage family creation after authorization', async () => {
+    memberService.findOne.mockResolvedValue({
+      id: 'member-1',
+      familyId: 'family-1',
+      family: {
+        id: 'family-1',
+        regionId: 'region-1',
+      },
+    });
+    memberService.createFamilyFromMarriage.mockResolvedValue({
+      id: 'family-2',
+      familyName: 'New Family',
+    });
+
+    await expect(
+      controller.createFamilyFromMarriage(
+        'member-1',
+        { familyName: 'New Family' },
+        {
+          user: {
+            authType: 'user',
+            role: 'ADMIN',
+            sub: 'user-1',
+          },
+        } as any,
+      ),
+    ).resolves.toEqual({
+      id: 'family-2',
+      familyName: 'New Family',
+    });
+
+    expect(memberService.createFamilyFromMarriage).toHaveBeenCalledWith(
+      'member-1',
+      { familyName: 'New Family' },
+    );
   });
 });

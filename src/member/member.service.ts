@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { Gender, Member, MemberRole, Prisma } from '@prisma/client';
@@ -9,6 +9,8 @@ import {
 } from '../common/utils/pagination.util';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { MemberPelkat } from './member-pelkat.enum';
+import { MarkMemberDeceasedDto } from './dto/mark-member-deceased.dto';
+import { MarryMemberDto } from './dto/marry-member.dto';
 
 type MemberWithPelkat = Member & { pelkat: string };
 
@@ -112,6 +114,149 @@ export class MemberService {
     return this.attachPelkat(member);
   }
 
+  async markAsDeceased(id: string, dto: MarkMemberDeceasedDto) {
+    const member = await this.prisma.member.findUnique({
+      where: { id },
+      include: {
+        family: true,
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Member not found');
+    }
+
+    if (member.isDeceased) {
+      throw new BadRequestException('Member is already marked as deceased');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      if (member.role === MemberRole.FAMILY_HEAD) {
+        await this.ensureReplacementFamilyHead(
+          tx,
+          member.familyId,
+          id,
+          dto.newFamilyHeadId,
+        );
+      }
+
+      await tx.member.update({
+        where: { id },
+        data: {
+          isActive: false,
+          isDeceased: true,
+          deathDate: dto.deathDate ? new Date(dto.deathDate) : new Date(),
+          ...(member.role === MemberRole.FAMILY_HEAD && { role: MemberRole.OTHER }),
+        },
+      });
+    });
+
+    const updatedMember = await this.prisma.member.findUnique({
+      where: { id },
+      include: {
+        family: true,
+      },
+    });
+
+    return updatedMember ? this.attachPelkat(updatedMember) : null;
+  }
+
+  async createFamilyFromMarriage(id: string, dto: MarryMemberDto) {
+    const member = await this.prisma.member.findUnique({
+      where: { id },
+      include: {
+        family: true,
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Member not found');
+    }
+
+    if (member.isDeceased || !member.isActive) {
+      throw new BadRequestException(
+        'Only active members can be moved into a new family',
+      );
+    }
+
+    const roleInNewFamily =
+      dto.roleInNewFamily ??
+      (dto.spouse
+        ? member.gender === Gender.MALE
+          ? MemberRole.FAMILY_HEAD
+          : MemberRole.WIFE
+        : MemberRole.FAMILY_HEAD);
+
+    if (
+      roleInNewFamily !== MemberRole.FAMILY_HEAD &&
+      roleInNewFamily !== MemberRole.WIFE
+    ) {
+      throw new BadRequestException(
+        'roleInNewFamily must be FAMILY_HEAD or WIFE',
+      );
+    }
+
+    const newFamily = await this.prisma.$transaction(async (tx) => {
+      if (member.role === MemberRole.FAMILY_HEAD) {
+        await this.ensureReplacementFamilyHead(
+          tx,
+          member.familyId,
+          id,
+          dto.newFamilyHeadId,
+        );
+      }
+
+      const family = await tx.family.create({
+        data: {
+          familyName: dto.familyName,
+          address: dto.address,
+          region: {
+            connect: { id: member.family.regionId },
+          },
+        },
+      });
+
+      await tx.member.update({
+        where: { id },
+        data: {
+          family: {
+            connect: { id: family.id },
+          },
+          role: roleInNewFamily,
+        },
+      });
+
+      if (dto.spouse) {
+        await tx.member.create({
+          data: {
+            name: dto.spouse.name,
+            gender: dto.spouse.gender,
+            birthDate: new Date(dto.spouse.birthDate),
+            phone: dto.spouse.phone,
+            email: dto.spouse.email,
+            role:
+              roleInNewFamily === MemberRole.FAMILY_HEAD
+                ? MemberRole.WIFE
+                : MemberRole.FAMILY_HEAD,
+            family: {
+              connect: { id: family.id },
+            },
+          },
+        });
+      }
+
+      return tx.family.findUnique({
+        where: { id: family.id },
+        include: {
+          region: true,
+          members: true,
+        },
+      });
+    });
+
+    return newFamily;
+  }
+
   async findFamilyRegionId(familyId: string) {
     const family = await this.prisma.family.findUnique({
       where: { id: familyId },
@@ -133,11 +278,15 @@ export class MemberService {
     const female = await this.prisma.member.count({
       where: {
         gender: Gender.FEMALE,
+        isActive: true,
+        isDeceased: false,
       },
     });
     const male = await this.prisma.member.count({
       where: {
         gender: Gender.MALE,
+        isActive: true,
+        isDeceased: false,
       },
     });
 
@@ -241,25 +390,33 @@ export class MemberService {
         in: [MemberRole.FAMILY_HEAD, MemberRole.WIFE],
       },
     };
+    const activeLivingWhere: Prisma.MemberWhereInput = {
+      isActive: true,
+      isDeceased: false,
+    };
 
     switch (pelkat) {
       case MemberPelkat.PELAYANAN_ANAK:
         return {
+          ...activeLivingWhere,
           birthDate: this.getBirthDateBetweenAges(0, 12),
           NOT: isMarriedWhere,
         };
       case MemberPelkat.PERSEKUTUAN_TARUNA:
         return {
+          ...activeLivingWhere,
           birthDate: this.getBirthDateBetweenAges(13, 16),
           NOT: isMarriedWhere,
         };
       case MemberPelkat.GERAKAN_PEMUDA:
         return {
+          ...activeLivingWhere,
           birthDate: this.getBirthDateBetweenAges(17, 35),
           NOT: isMarriedWhere,
         };
       case MemberPelkat.PERSEKUTUAN_KAUM_BAPAK:
         return {
+          ...activeLivingWhere,
           gender: Gender.MALE,
           OR: [
             {
@@ -273,6 +430,7 @@ export class MemberService {
         };
       case MemberPelkat.PERSEKUTUAN_KAUM_PEREMPUAN:
         return {
+          ...activeLivingWhere,
           gender: Gender.FEMALE,
           OR: [
             {
@@ -286,6 +444,7 @@ export class MemberService {
         };
       case MemberPelkat.PERSEKUTUAN_KAUM_LANJUT_USIA:
         return {
+          ...activeLivingWhere,
           birthDate: this.getBirthDateAtLeastAge(60),
         };
     }
@@ -296,6 +455,59 @@ export class MemberService {
       gte: this.addDays(this.subtractYears(maxAge + 1), 1),
       lte: this.subtractYears(minAge),
     };
+  }
+
+  private async ensureReplacementFamilyHead(
+    tx: Prisma.TransactionClient,
+    familyId: string,
+    excludedMemberId: string,
+    newFamilyHeadId?: string,
+  ) {
+    const remainingMembers = await tx.member.findMany({
+      where: {
+        familyId,
+        id: {
+          not: excludedMemberId,
+        },
+        isActive: true,
+        isDeceased: false,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (remainingMembers.length === 0) {
+      return;
+    }
+
+    if (!newFamilyHeadId) {
+      throw new BadRequestException(
+        'A new family head is required when other active family members remain',
+      );
+    }
+
+    const replacement = await tx.member.findFirst({
+      where: {
+        id: newFamilyHeadId,
+        familyId,
+        isActive: true,
+        isDeceased: false,
+      },
+    });
+
+    if (!replacement) {
+      throw new BadRequestException(
+        'Replacement family head must be an active member in the same family',
+      );
+    }
+
+    await tx.member.update({
+      where: { id: newFamilyHeadId },
+      data: {
+        role: MemberRole.FAMILY_HEAD,
+      },
+    });
   }
 
   private getBirthDateUnderAge(age: number) {

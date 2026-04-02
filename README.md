@@ -19,6 +19,8 @@ Backend API for church management features built with NestJS and Prisma.
 - Region coordinator assignment
 - Family management
 - Member management
+- Member marriage family split flow
+- Member death tracking with family head reassignment
 - Attendance management
 - Health check endpoint
 
@@ -111,6 +113,11 @@ Examples:
 - `GET /api/v1/regions`
 - `PATCH /api/v1/regions/:id/coordinator`
 
+Additional member lifecycle routes:
+
+- `PATCH /api/v1/member/:id/deceased`
+- `POST /api/v1/member/:id/marriage-family`
+
 ## Coordinator Role
 
 The backend supports assigning a region coordinator from an existing `Member` in that same region.
@@ -140,6 +147,55 @@ To clear a coordinator from a region:
   "memberId": null
 }
 ```
+
+For `POST /api/auth/member-login`, the request body only needs:
+
+```json
+{
+  "name": "Member Name",
+  "password": "dd-mm-yyyy"
+}
+```
+
+Member login tokens are identified by `authType: "member"`. Region-level member access is controlled by `isRegionCoordinator`, and household permissions are controlled by `memberRole`. A member login no longer carries a redundant system `role`.
+
+## Member Lifecycle Cases
+
+Two explicit flows are available for common family changes:
+
+1. Marriage and starting a new family:
+
+```http
+POST /api/v1/member/:id/marriage-family
+Content-Type: application/json
+
+{
+  "familyName": "Jonathan Family",
+  "address": "Jl. Example 123",
+  "newFamilyHeadId": "remaining-member-id-if-needed",
+  "spouse": {
+    "name": "Maria",
+    "gender": "FEMALE",
+    "birthDate": "1997-01-10T00:00:00.000Z"
+  }
+}
+```
+
+This creates a new family in the same region, moves the selected member into it, and optionally creates the spouse as the second member. If the moved member was the old family head and active members remain behind, `newFamilyHeadId` is required.
+
+2. Marking a member as deceased:
+
+```http
+PATCH /api/v1/member/:id/deceased
+Content-Type: application/json
+
+{
+  "deathDate": "2026-04-02T00:00:00.000Z",
+  "newFamilyHeadId": "replacement-member-id"
+}
+```
+
+This marks the member as deceased, stores the death date, and automatically sets `isActive` to `false`. If the deceased member was the family head and other active members remain in that family, `newFamilyHeadId` is required.
 
 ## Health Check
 

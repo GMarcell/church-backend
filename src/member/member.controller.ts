@@ -20,6 +20,8 @@ import { AuthPayload } from '../auth/interfaces/auth-payload.interface';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { MemberRole, Role } from '@prisma/client';
 import { MemberPelkat } from './member-pelkat.enum';
+import { MarkMemberDeceasedDto } from './dto/mark-member-deceased.dto';
+import { MarryMemberDto } from './dto/marry-member.dto';
 
 @Controller('v1/member')
 export class MemberController {
@@ -72,19 +74,68 @@ export class MemberController {
     @Body() dto: UpdateMemberDto,
     @Req() req: Request & { user: AuthPayload },
   ) {
+    await this.assertCanManageMemberMutation(id, req, {
+      targetFamilyId: dto.familyId,
+      allowFamilyChangeByRegularMember: false,
+      allowRoleChangeByRegularMember: dto.role === undefined,
+    });
+
+    return this.memberService.update(id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/deceased')
+  async markAsDeceased(
+    @Param('id') id: string,
+    @Body() dto: MarkMemberDeceasedDto,
+    @Req() req: Request & { user: AuthPayload },
+  ) {
+    await this.assertCanManageMemberMutation(id, req);
+    return this.memberService.markAsDeceased(id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/marriage-family')
+  async createFamilyFromMarriage(
+    @Param('id') id: string,
+    @Body() dto: MarryMemberDto,
+    @Req() req: Request & { user: AuthPayload },
+  ) {
+    await this.assertCanManageMemberMutation(id, req);
+    return this.memberService.createFamilyFromMarriage(id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.memberService.remove(id);
+  }
+
+  private async assertCanManageMemberMutation(
+    id: string,
+    req: Request & { user: AuthPayload },
+    options: {
+      targetFamilyId?: string;
+      allowFamilyChangeByRegularMember?: boolean;
+      allowRoleChangeByRegularMember?: boolean;
+    } = {},
+  ) {
+    const member = await this.memberService.findOne(id);
+
+    if (!member) {
+      throw new ForbiddenException('Member not found');
+    }
+
     if (req.user.authType === 'member') {
       if (req.user.isRegionCoordinator) {
-        const member = await this.memberService.findOne(id);
-
-        if (!member || member.family.regionId !== req.user.regionId) {
+        if (member.family.regionId !== req.user.regionId) {
           throw new ForbiddenException(
             'Coordinators can only edit members in their own region',
           );
         }
 
-        if (dto.familyId !== undefined) {
+        if (options.targetFamilyId !== undefined) {
           const targetRegionId = await this.memberService.findFamilyRegionId(
-            dto.familyId,
+            options.targetFamilyId,
           );
 
           if (!targetRegionId || targetRegionId !== req.user.regionId) {
@@ -94,10 +145,19 @@ export class MemberController {
           }
         }
 
-        return this.memberService.update(id, dto);
+        return;
       }
 
-      if (dto.familyId !== undefined || dto.role !== undefined) {
+      if (
+        options.allowFamilyChangeByRegularMember === false &&
+        options.targetFamilyId !== undefined
+      ) {
+        throw new ForbiddenException(
+          'Members cannot change family assignment or member role',
+        );
+      }
+
+      if (options.allowRoleChangeByRegularMember === false) {
         throw new ForbiddenException(
           'Members cannot change family assignment or member role',
         );
@@ -108,27 +168,26 @@ export class MemberController {
           throw new ForbiddenException('Members can only edit their own data');
         }
 
-        const member = await this.memberService.findOne(id);
-        if (!member || member.familyId !== req.user.familyId) {
+        if (member.familyId !== req.user.familyId) {
           throw new ForbiddenException(
             'Family heads can only edit members in their own family',
           );
         }
       }
+
+      return;
     }
 
     if (req.user.authType === 'user' && req.user.role === Role.COORDINATOR) {
-      const member = await this.memberService.findOne(id);
-
-      if (!member || member.family.regionId !== req.user.regionId) {
+      if (member.family.regionId !== req.user.regionId) {
         throw new ForbiddenException(
           'Coordinators can only edit members in their own region',
         );
       }
 
-      if (dto.familyId !== undefined) {
+      if (options.targetFamilyId !== undefined) {
         const targetRegionId = await this.memberService.findFamilyRegionId(
-          dto.familyId,
+          options.targetFamilyId,
         );
 
         if (!targetRegionId || targetRegionId !== req.user.regionId) {
@@ -138,12 +197,5 @@ export class MemberController {
         }
       }
     }
-
-    return this.memberService.update(id, dto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.memberService.remove(id);
   }
 }

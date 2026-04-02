@@ -27,6 +27,10 @@
       "value": ""
     },
     {
+      "key": "newFamilyHeadId",
+      "value": ""
+    },
+    {
       "key": "memberPelkat",
       "value": "Gerakan Pemuda"
     },
@@ -89,7 +93,7 @@
           "response": []
         },
         {
-          "name": "Member Login",
+          "name": "Member Login / Coordinator Member Login",
           "event": [
             {
               "listen": "test",
@@ -842,6 +846,86 @@
                 "v1",
                 "member",
                 "{{memberId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Member Deceased",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deathDate\": \"2026-04-02T00:00:00.000Z\",\n  \"newFamilyHeadId\": \"{{newFamilyHeadId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/member/{{memberId}}/deceased",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "member",
+                "{{memberId}}",
+                "deceased"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Family From Marriage",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('familyId', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"familyName\": \"Jonathan Family\",\n  \"address\": \"Jl. Example 123\",\n  \"newFamilyHeadId\": \"{{newFamilyHeadId}}\",\n  \"spouse\": {\n    \"name\": \"Maria\",\n    \"gender\": \"FEMALE\",\n    \"birthDate\": \"1997-01-10T00:00:00.000Z\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/member/{{memberId}}/marriage-family",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "member",
+                "{{memberId}}",
+                "marriage-family"
               ]
             }
           },
