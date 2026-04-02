@@ -1,98 +1,229 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Church Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend API for church management features built with NestJS and Prisma.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+- NestJS
+- Prisma
+- PostgreSQL
+- TypeScript
+- Docker
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Features
 
-## Project setup
+- Authentication
+- User management
+- Branch management
+- Region management
+- Family management
+- Member management
+- Attendance management
+- Health check endpoint
 
-```bash
-$ npm install
+## Requirements
+
+- Node.js 20+
+- npm 10+
+- PostgreSQL database
+
+## Environment Variables
+
+Create a `.env` file in the project root.
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:6543/DATABASE?pgbouncer=true"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE"
+PORT=3000
+JWT_SECRET="change-me"
 ```
 
-## Compile and run the project
+Notes:
+
+- `DATABASE_URL` is the main Prisma connection string.
+- `DIRECT_URL` is used by Prisma for direct database access.
+- `PORT` defaults to `3000` if not provided.
+
+## Install Dependencies
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+## Prisma Setup
+
+Generate the Prisma client:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npx prisma generate
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+If you are using migrations, run:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npx prisma migrate deploy
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+For local development with schema changes, you can use:
 
-## Resources
+```bash
+npx prisma migrate dev
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## Run The Project
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Development mode:
 
-## Support
+```bash
+npm run start:dev
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Standard mode:
 
-## Stay in touch
+```bash
+npm run start
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Production mode:
 
-## License
+```bash
+npm run build
+npm run start:prod
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+The app listens on:
+
+- `0.0.0.0`
+- `process.env.PORT` or `3000`
+
+## API Base Path
+
+Most routes use the `/api` prefix.
+
+Examples:
+
+- `GET /api`
+- `POST /api/auth/login`
+- `POST /api/auth/member-login`
+- `GET /api/users`
+
+## Health Check
+
+Health check is available without the `/api` prefix:
+
+```http
+GET /health
+```
+
+Example:
+
+```bash
+curl http://localhost:3000/health
+```
+
+## Seed The Database
+
+This project includes a Prisma seed file at [prisma/seed.ts](/home/admin-ubuntu/grand/church-sytem/church-backend/prisma/seed.ts).
+
+Run the seed command with:
+
+```bash
+npx prisma db seed
+```
+
+What the seed currently creates:
+
+- Branches
+- Regions
+- Families
+- Members
+- Attendance records
+- Users
+
+Seeded user accounts:
+
+- `admin@example.com` / `admin123`
+- `staff@example.com` / `staff123`
+- `finance@example.com` / `finance123`
+
+Important:
+
+- The seed clears existing data first using `deleteMany()`.
+- Run it only if you are okay with replacing current seedable data.
+
+## Build And Run With Docker
+
+Build the image:
+
+```bash
+docker build -t church-backend .
+```
+
+Run the container:
+
+```bash
+docker run --env-file .env -p 3000:3000 church-backend
+```
+
+## Railway Notes
+
+- Railway should provide `PORT` automatically.
+- The app already listens on the Railway-assigned port.
+- Make sure `DATABASE_URL`, `DIRECT_URL`, and `JWT_SECRET` are configured in Railway variables.
+- If the app deploys but returns `502`, check the runtime logs for database connection failures during Prisma startup.
+
+## Useful Commands
+
+```bash
+npm run build
+npm run lint
+npm run test
+npm run test:e2e
+npm run test:cov
+```
+
+## Project Structure
+
+```text
+src/
+  auth/
+  attendance/
+  branch/
+  family/
+  member/
+  prisma/
+  region/
+  user/
+prisma/
+  schema.prisma
+  seed.ts
+```
+
+## Postman
+
+A Postman collection is available in:
+
+[postman/church-backend.postman_collection.json](/home/admin-ubuntu/grand/church-sytem/church-backend/postman/church-backend.postman_collection.json)
+
+## Troubleshooting
+
+`nest: not found`
+
+- Install dev dependencies before building.
+- In Docker, the build stage must include dev dependencies.
+
+`Cannot find module 'class-validator'`
+
+- Run `npm install`.
+- Make sure `class-validator` and `class-transformer` exist in `package.json`.
+
+`PrismaClientInitializationError` or database unreachable
+
+- Verify `DATABASE_URL` and `DIRECT_URL`.
+- Confirm the PostgreSQL instance is reachable from your runtime environment.
+
+`Application failed to respond` on Railway
+
+- Make sure you are calling the correct route, usually under `/api`.
+- Check `/health` first.
+- Check Railway logs for Prisma connection failures during startup.
