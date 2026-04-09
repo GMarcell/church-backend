@@ -15,7 +15,7 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateUserDto) {
-    this.validateCoordinatorAssignment(dto.role, dto.regionId);
+    await this.validateCoordinatorAssignment(dto.role, dto.regionId);
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     return this.prisma.user.create({
@@ -72,7 +72,7 @@ export class UserService {
     const nextRegionId =
       dto.regionId !== undefined ? dto.regionId : existingUser.regionId;
 
-    this.validateCoordinatorAssignment(nextRole, nextRegionId);
+    await this.validateCoordinatorAssignment(nextRole, nextRegionId, id);
 
     const data: Prisma.UserUpdateInput = {
       ...(dto.email !== undefined && { email: dto.email }),
@@ -107,9 +107,10 @@ export class UserService {
     });
   }
 
-  private validateCoordinatorAssignment(
+  private async validateCoordinatorAssignment(
     role: Role,
     regionId: string | null | undefined,
+    excludeUserId?: string,
   ) {
     if (role === Role.COORDINATOR && !regionId) {
       throw new BadRequestException(
@@ -120,6 +121,28 @@ export class UserService {
     if (role !== Role.COORDINATOR && regionId) {
       throw new BadRequestException(
         'Only coordinator users can be assigned to a region',
+      );
+    }
+
+    if (role !== Role.COORDINATOR || !regionId) {
+      return;
+    }
+
+    const existingCoordinator = await this.prisma.user.findFirst({
+      where: {
+        role: Role.COORDINATOR,
+        regionId,
+        ...(excludeUserId && {
+          id: {
+            not: excludeUserId,
+          },
+        }),
+      },
+    });
+
+    if (existingCoordinator) {
+      throw new BadRequestException(
+        'This region already has a coordinator user',
       );
     }
   }

@@ -18,7 +18,7 @@ import { UpdateMemberDto } from './dto/update-member.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthPayload } from '../auth/interfaces/auth-payload.interface';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
-import { MemberRole, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { MemberPelkat } from './member-pelkat.enum';
 import { MarkMemberDeceasedDto } from './dto/mark-member-deceased.dto';
 import { MarryMemberDto } from './dto/marry-member.dto';
@@ -125,60 +125,7 @@ export class MemberController {
       throw new ForbiddenException('Member not found');
     }
 
-    if (req.user.authType === 'member') {
-      if (req.user.isRegionCoordinator) {
-        if (member.family.regionId !== req.user.regionId) {
-          throw new ForbiddenException(
-            'Coordinators can only edit members in their own region',
-          );
-        }
-
-        if (options.targetFamilyId !== undefined) {
-          const targetRegionId = await this.memberService.findFamilyRegionId(
-            options.targetFamilyId,
-          );
-
-          if (!targetRegionId || targetRegionId !== req.user.regionId) {
-            throw new ForbiddenException(
-              'Coordinators cannot move members to another region',
-            );
-          }
-        }
-
-        return;
-      }
-
-      if (
-        options.allowFamilyChangeByRegularMember === false &&
-        options.targetFamilyId !== undefined
-      ) {
-        throw new ForbiddenException(
-          'Members cannot change family assignment or member role',
-        );
-      }
-
-      if (options.allowRoleChangeByRegularMember === false) {
-        throw new ForbiddenException(
-          'Members cannot change family assignment or member role',
-        );
-      }
-
-      if (req.user.sub !== id) {
-        if (req.user.memberRole !== MemberRole.FAMILY_HEAD) {
-          throw new ForbiddenException('Members can only edit their own data');
-        }
-
-        if (member.familyId !== req.user.familyId) {
-          throw new ForbiddenException(
-            'Family heads can only edit members in their own family',
-          );
-        }
-      }
-
-      return;
-    }
-
-    if (req.user.authType === 'user' && req.user.role === Role.COORDINATOR) {
+    if (req.user.role === Role.COORDINATOR) {
       if (member.family.regionId !== req.user.regionId) {
         throw new ForbiddenException(
           'Coordinators can only edit members in their own region',

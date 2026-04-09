@@ -82,10 +82,11 @@ describe('MemberController', () => {
     await expect(
       controller.update('member-1', { name: 'Updated Member' }, {
         user: {
-          authType: 'member',
-          isRegionCoordinator: true,
+          authType: 'user',
+          role: 'COORDINATOR',
           regionId: 'region-1',
-          sub: 'member-99',
+          email: 'coordinator@example.com',
+          sub: 'user-99',
         },
       } as any),
     ).resolves.toEqual({
@@ -112,10 +113,11 @@ describe('MemberController', () => {
     await expect(
       controller.update('member-1', { familyId: 'family-2' }, {
         user: {
-          authType: 'member',
-          isRegionCoordinator: true,
+          authType: 'user',
+          role: 'COORDINATOR',
           regionId: 'region-1',
-          sub: 'member-99',
+          email: 'coordinator@example.com',
+          sub: 'user-99',
         },
       } as any),
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -145,6 +147,7 @@ describe('MemberController', () => {
           user: {
             authType: 'user',
             role: 'ADMIN',
+            email: 'admin@example.com',
             sub: 'user-1',
           },
         } as any,
@@ -181,6 +184,7 @@ describe('MemberController', () => {
           user: {
             authType: 'user',
             role: 'ADMIN',
+            email: 'admin@example.com',
             sub: 'user-1',
           },
         } as any,

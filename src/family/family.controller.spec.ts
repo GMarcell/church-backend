@@ -42,10 +42,11 @@ describe('FamilyController', () => {
     await expect(
       controller.update('family-1', { familyName: 'Updated Family' }, {
         user: {
-          authType: 'member',
-          isRegionCoordinator: true,
+          authType: 'user',
+          role: 'COORDINATOR',
           regionId: 'region-1',
-          sub: 'member-1',
+          email: 'coordinator@example.com',
+          sub: 'user-1',
         },
       } as any),
     ).resolves.toEqual({
@@ -67,10 +68,11 @@ describe('FamilyController', () => {
     await expect(
       controller.update('family-1', { familyName: 'Updated Family' }, {
         user: {
-          authType: 'member',
-          isRegionCoordinator: true,
+          authType: 'user',
+          role: 'COORDINATOR',
           regionId: 'region-1',
-          sub: 'member-1',
+          email: 'coordinator@example.com',
+          sub: 'user-1',
         },
       } as any),
     ).rejects.toBeInstanceOf(ForbiddenException);

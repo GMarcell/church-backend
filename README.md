@@ -108,7 +108,6 @@ Examples:
 - `GET /api`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
-- `POST /api/auth/member-login`
 - `GET /api/users`
 - `GET /api/v1/regions`
 - `PATCH /api/v1/regions/:id/coordinator`
@@ -127,7 +126,7 @@ Current behavior:
 - Region responses include a `coordinator` field on `GET /api/v1/regions` and `GET /api/v1/regions/:id`
 - Region coordinator assignment is available through `PATCH /api/v1/regions/:id/coordinator`
 - The selected coordinator must be a member whose family belongs to that region
-- Members who are assigned as region coordinators can edit family and member data inside their own region
+- Users with role `COORDINATOR` can log in through `POST /api/auth/login` and edit family and member data inside their own region
 
 Example assign request:
 
@@ -148,16 +147,16 @@ To clear a coordinator from a region:
 }
 ```
 
-For `POST /api/auth/member-login`, the request body only needs:
+For `POST /api/auth/login`, use the coordinator user account credentials:
 
 ```json
 {
-  "name": "Member Name",
-  "password": "dd-mm-yyyy"
+  "email": "coordinator.regiona@example.com",
+  "password": "password"
 }
 ```
 
-Member login tokens are identified by `authType: "member"`. Region-level member access is controlled by `isRegionCoordinator`, and household permissions are controlled by `memberRole`. A member login no longer carries a redundant system `role`.
+All authentication tokens are now user-based and identified by `authType: "user"`. Region-level coordinator access is controlled by the user `role` plus `regionId`.
 
 ## Member Lifecycle Cases
 
@@ -232,10 +231,12 @@ What the seed currently creates:
 
 Seeded user accounts:
 
-- `admin@example.com` / `admin123`
-- `staff@example.com` / `staff123`
-- `finance@example.com` / `finance123`
-- `coordinator.regiona@example.com` / `coordinator123`
+- `admin@example.com` / `password`
+- `staff@example.com` / `password`
+- `finance@example.com` / `password`
+- `coordinator.regiona@example.com` / `password`
+- `coordinator.regionb@example.com` / `password`
+- `coordinator.regionc@example.com` / `password`
 
 Important:
 

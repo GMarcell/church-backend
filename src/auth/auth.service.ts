@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { MemberRole, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { AuthPayload } from './interfaces/auth-payload.interface';
 
 @Injectable()
@@ -16,21 +16,13 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  private formatDateAsPassword(date: Date) {
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const year = date.getUTCFullYear();
-
-    return `${day}-${month}-${year}`;
-  }
-
   async register(
     email: string,
     password: string,
     role: Role,
     regionId?: string,
   ) {
-    this.validateCoordinatorAssignment(role, regionId);
+    await this.validateCoordinatorAssignment(role, regionId);
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.prisma.user.create({
@@ -96,68 +88,7 @@ export class AuthService {
     };
   }
 
-  async memberLogin(name: string, password: string) {
-    const members = await this.prisma.member.findMany({
-      where: {
-        name: {
-          equals: name,
-          mode: 'insensitive',
-        },
-      },
-      include: {
-        family: {
-          select: {
-            regionId: true,
-          },
-        },
-        coordinatedRegion: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
-
-    const member = members.find(
-      (item) => this.formatDateAsPassword(item.birthDate) === password,
-    );
-
-    if (!member) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const payload: AuthPayload = {
-      sub: member.id,
-      authType: 'member',
-      memberId: member.id,
-      name: member.name,
-      familyId: member.familyId,
-      regionId: member.family.regionId,
-      isRegionCoordinator: Boolean(member.coordinatedRegion),
-      memberRole: member.role,
-    };
-
-    const accessToken = this.jwtService.sign(payload);
-
-    return {
-      access_token: accessToken,
-      token: accessToken,
-      user: member.email
-        ? {
-            email: member.email,
-          }
-        : undefined,
-      member: {
-        id: member.id,
-        name: member.name,
-        role: member.role,
-        regionId: member.family.regionId,
-        isRegionCoordinator: Boolean(member.coordinatedRegion),
-      },
-    };
-  }
-
-  private validateCoordinatorAssignment(role: Role, regionId?: string) {
+  private async validateCoordinatorAssignment(role: Role, regionId?: string) {
     if (role === Role.COORDINATOR && !regionId) {
       throw new BadRequestException(
         'Coordinator users must be assigned to a region',
@@ -167,6 +98,23 @@ export class AuthService {
     if (role !== Role.COORDINATOR && regionId) {
       throw new BadRequestException(
         'Only coordinator users can be assigned to a region',
+      );
+    }
+
+    if (role !== Role.COORDINATOR || !regionId) {
+      return;
+    }
+
+    const existingCoordinator = await this.prisma.user.findFirst({
+      where: {
+        role: Role.COORDINATOR,
+        regionId,
+      },
+    });
+
+    if (existingCoordinator) {
+      throw new BadRequestException(
+        'This region already has a coordinator user',
       );
     }
   }

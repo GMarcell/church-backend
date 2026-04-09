@@ -33,14 +33,14 @@ async function main() {
     },
   });
 
-  await prisma.region.create({
+  const region2 = await prisma.region.create({
     data: {
       name: 'Region B',
       branchId: branch1.id,
     },
   });
 
-  await prisma.region.create({
+  const region3 = await prisma.region.create({
     data: {
       name: 'Region C',
       branchId: branch2.id,
@@ -124,24 +124,36 @@ async function main() {
     data: [
       {
         email: 'admin@example.com',
-        password: await bcrypt.hash('admin123', 10),
+        password: await bcrypt.hash('password', 10),
         role: Role.ADMIN,
       },
       {
         email: 'staff@example.com',
-        password: await bcrypt.hash('staff123', 10),
+        password: await bcrypt.hash('password', 10),
         role: Role.STAFF,
       },
       {
         email: 'finance@example.com',
-        password: await bcrypt.hash('finance123', 10),
+        password: await bcrypt.hash('password', 10),
         role: Role.FINANCE,
       },
       {
         email: 'coordinator.regiona@example.com',
-        password: await bcrypt.hash('coordinator123', 10),
+        password: await bcrypt.hash('password', 10),
         role: Role.COORDINATOR,
         regionId: region1.id,
+      },
+      {
+        email: 'coordinator.regionb@example.com',
+        password: await bcrypt.hash('password', 10),
+        role: Role.COORDINATOR,
+        regionId: region2.id,
+      },
+      {
+        email: 'coordinator.regionc@example.com',
+        password: await bcrypt.hash('password', 10),
+        role: Role.COORDINATOR,
+        regionId: region3.id,
       },
     ],
   });
